@@ -1,7 +1,7 @@
 // Moteur d'apprentissage : ordre d'introduction, boîtes de Leitner, composition d'une séance, astuces.
 
 export type Pair = [number, number] // toujours a <= b : 3×7 et 7×3 sont le même fait
-export type Card = { level: number; due: number } // due = numéro de jour
+export type Card = { level: number; due: number; miss?: number } // due = numéro de jour ; miss = erreurs au 1er essai
 export type Progress = Record<string, Card>
 
 export const MASTERED = 5
@@ -44,10 +44,10 @@ export const today = (now = new Date()) =>
 // Seule la 1re réponse d'une séance est notée. Un fait pas encore dû ne monte pas (sinon on casse l'espacement),
 // mais une erreur le fait toujours redescendre.
 export function grade(card: Card, correct: boolean, ms: number, day: number, limit = FAST_MS): Card {
-  if (!correct) return { level: 1, due: day + 1 }
+  if (!correct) return { level: 1, due: day + 1, miss: (card.miss ?? 0) + 1 }
   if (card.due > day) return card
   const level = ms < limit ? Math.min(card.level + 1, MASTERED) : card.level
-  return { level, due: day + INTERVALS[level] }
+  return { ...card, level, due: day + INTERVALS[level] }
 }
 
 // Seuil adapté à l'enfant : son temps sur ×1 et ×10, qu'il n'a pas à calculer, mesure sa vitesse de lecture et de frappe.
@@ -129,3 +129,8 @@ export function streak(days: number[], day: number): number {
   while (played.has(d--)) n++
   return n
 }
+
+export const mostMissed = (p: Progress, n = 5) =>
+  PAIRS.filter(([a, b]) => (p[key(a, b)]?.miss ?? 0) > 0)
+    .sort(([a, b], [c, d]) => p[key(c, d)].miss! - p[key(a, b)].miss!)
+    .slice(0, n)

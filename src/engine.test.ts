@@ -11,6 +11,7 @@ import {
   key,
   planSession,
   speedLimit,
+  mostMissed,
   streak,
   tablesDone,
   type Progress,
@@ -50,11 +51,14 @@ describe('grade', () => {
     expect(grade(due, true, 3500, day, 4000).level).toBe(3)
   })
   it('redescend au niveau 1 si faux, même pas encore dû', () => {
-    expect(grade({ level: 4, due: day + 5 }, false, 500, day)).toEqual({ level: 1, due: day + 1 })
+    expect(grade({ level: 4, due: day + 5, miss: 2 }, false, 500, day)).toEqual({ level: 1, due: day + 1, miss: 3 })
   })
   it('ne bouge pas un fait pas encore dû', () => {
     const card = { level: 3, due: day + 2 }
     expect(grade(card, true, 500, day)).toBe(card)
+  })
+  it("garde le nombre d'erreurs quand c'est juste", () => {
+    expect(grade({ level: 2, due: day, miss: 2 }, true, 500, day).miss).toBe(2)
   })
   it('plafonne à maîtrisé', () => {
     expect(grade({ level: MASTERED, due: day }, true, 500, day).level).toBe(MASTERED)
@@ -153,5 +157,12 @@ describe('streak', () => {
   it('reste valable si l’enfant a joué hier mais pas encore aujourd’hui', () => {
     expect(streak([day - 1, day - 2], day)).toBe(2)
     expect(streak([day - 2], day)).toBe(0)
+  })
+})
+
+describe('mostMissed', () => {
+  it('classe les calculs par nombre d’erreurs', () => {
+    const p: Progress = { '6x7': { level: 1, due: 0, miss: 3 }, '7x8': { level: 1, due: 0, miss: 5 }, '2x3': { level: 4, due: 0 } }
+    expect(mostMissed(p)).toEqual([[7, 8], [6, 7]])
   })
 })

@@ -259,3 +259,91 @@ button:focus-visible {
   font-weight: 700;
   color: var(--accent);
 }
+
+.link {
+  justify-self: center;
+  border: 0;
+  background: none;
+  color: var(--ink);
+  font-size: 1rem;
+  text-decoration: underline;
+}
+
+/* Espace parent : pour les adultes, texte plus dense */
+.parent {
+  display: grid;
+  gap: 0.6rem;
+  text-align: left;
+  font-size: 1.1rem;
+}
+
+.parent h2,
+.parent h3 {
+  margin: 0.6rem 0 0;
+}
+
+.parent ul {
+  margin: 0;
+  padding-left: 1.2rem;
+}
+
+.parent .tables {
+  display: grid;
+  gap: 0.2rem;
+  padding: 0;
+  list-style: none;
+}
+
+.parent .tables li {
+  display: grid;
+  grid-template-columns: 7rem 1fr 3rem;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.parent progress {
+  width: 100%;
+  accent-color: var(--ok);
+}
+
+.parent form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.parent input:not([type='file']) {
+  margin-left: 0.4rem;
+  padding: 0.3rem 0.5rem;
+  font: inherit;
+  border: 2px solid var(--muted);
+  border-radius: 0.5rem;
+}
+
+.parent button,
+.file {
+  justify-self: start;
+  padding: 0.4rem 0.8rem;
+  font-size: 1rem;
+  border: 2px solid var(--muted);
+  border-radius: 0.6rem;
+  background: var(--card);
+  color: var(--ink);
+}
+
+.file input {
+  display: block;
+  margin-top: 0.3rem;
+}
+
+.parent .danger {
+  border-color: #b91c1c;
+  color: #b91c1c;
+}
+
+/* Dans la légende, un morceau de ciel : la couleur des premières cases maîtrisées (×1 et ×10, sur les bords) */
+.legend [data-level='5'] {
+  --x: 0%;
+  --y: 0%;
+}

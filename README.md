@@ -15,6 +15,10 @@ En ligne : https://remiabel.github.io/tables-multiplication/ (redéployée par G
 - Motivation sans compétition : étoiles (effort, progrès, réussite), badge par table maîtrisée, une étoile par jour joué dans la semaine, une image qui se dévoile dans la grille.
 - Lecture des questions à voix haute (option sur l'accueil).
 
+## Espace parent
+
+Lien en bas de l'accueil : progression de l'enfant (maîtrisés / en cours / pas vus, par table), semaine (jours joués, questions, % justes du premier coup), calculs les plus ratés, seuil de vitesse. On y gère aussi les enfants (renommer, ajouter, supprimer : un profil par enfant, choisi depuis l'accueil) et la sauvegarde : télécharger un fichier, ou le recharger sur un autre appareil.
+
 Les réglages se trouvent en haut de [src/engine.ts](src/engine.ts).
 
 ## Commandes

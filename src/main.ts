@@ -8,6 +8,7 @@ import {
   hint,
   isRule,
   key,
+  mostMissed,
   planSession,
   speedLimit,
   streak,
@@ -15,8 +16,8 @@ import {
   today,
 } from './engine'
 
-const STORE = 'tables-multiplication'
-const SETTINGS = 'tables-multiplication-reglages'
+const STORE = 'tables-multiplication' // préfixe de toutes les données enregistrées
+const PROFILES = `${STORE}-profils`
 const app = document.querySelector<HTMLElement>('#app')!
 
 function load<T extends object>(name: string, fallback: T): T {
@@ -36,9 +37,35 @@ function save(name: string, value: unknown) {
   }
 }
 
-let progress: Progress = load(STORE, {})
-// times = derniers temps de réponse sur ×1 et ×10 (pour le seuil de vitesse) ; days = jours joués
-const settings = load(SETTINGS, { voice: false, times: [] as number[], days: [] as number[] })
+type Profile = { id: string; name: string }
+// times = derniers temps de réponse sur ×1 et ×10 (seuil de vitesse) ; days = jours joués ; log = [justes, questions] par jour
+type Settings = { voice: boolean; times: number[]; days: number[]; log: Record<string, [number, number]> }
+
+// Le 1er enfant (id '') garde les clés d'origine : la progression d'avant les profils est reprise telle quelle.
+const storageKeys = (id: string) => (id ? [`${STORE}:${id}`, `${STORE}-reglages:${id}`] : [STORE, `${STORE}-reglages`])
+
+const profiles = load(PROFILES, { list: [{ id: '', name: '' }] as Profile[], current: '' })
+if (!Array.isArray(profiles.list) || !profiles.list.length || !profiles.list.every((p) => typeof p?.id === 'string' && typeof p?.name === 'string'))
+  profiles.list = [{ id: '', name: '' }]
+
+let progress: Progress = {}
+let settings: Settings = { voice: false, times: [], days: [], log: {} }
+
+function useProfile(id: string) {
+  profiles.current = profiles.list.some((p) => p.id === id) ? id : profiles.list[0].id
+  save(PROFILES, profiles)
+  const [store, prefs] = storageKeys(profiles.current)
+  progress = load(store, {})
+  settings = load(prefs, { voice: false, times: [], days: [], log: {} })
+}
+
+const saveProgress = () => save(storageKeys(profiles.current)[0], progress)
+const saveSettings = () => save(storageKeys(profiles.current)[1], settings)
+const current = () => profiles.list.find((p) => p.id === profiles.current)!
+const esc = (s: string) => s.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`)
+const nameOf = (p: Profile) => esc(p.name || `Enfant ${profiles.list.indexOf(p) + 1}`)
+
+useProfile(profiles.current)
 let day = today()
 let session = newSession()
 
@@ -59,13 +86,23 @@ function newSession(): {
 
 if (import.meta.env.PROD) navigator.serviceWorker?.register('./sw.js')
 
-// Pavé, clavier et boutons passent tous par onKey : '0'-'9', 'del', 'ok', 'say' ou 'voice'.
+// Pavé, clavier, boutons, formulaires et choix de fichier passent tous par onKey, avec leur data-k
+// ('0'-'9', 'del', 'ok', 'say'… ; pour un formulaire, celui du <form>).
 let onKey: ((k: string) => void) | null = null
 app.addEventListener('click', (e) => {
-  const k = (e.target as HTMLElement).closest<HTMLElement>('[data-k]')?.dataset.k
+  const k = (e.target as HTMLElement).closest<HTMLElement>('button[data-k]')?.dataset.k
+  if (k) onKey?.(k)
+})
+app.addEventListener('submit', (e) => {
+  e.preventDefault()
+  onKey?.((e.target as HTMLFormElement).dataset.k!)
+})
+app.addEventListener('change', (e) => {
+  const k = (e.target as HTMLElement).dataset.k
   if (k) onKey?.(k)
 })
 document.addEventListener('keydown', (e) => {
+  if (e.target instanceof HTMLInputElement) return // saisie d'un prénom : clavier normal
   if (e.key === 'Enter' && e.target instanceof HTMLButtonElement) return // le bouton gère déjà Entrée
   const k = /^\d$/.test(e.key) ? e.key : e.key === 'Enter' ? 'ok' : e.key === 'Backspace' ? 'del' : null
   if (k) {
@@ -91,8 +128,11 @@ function ding() {
 function say(text: string, then?: () => void) {
   if (!settings.voice || !('speechSynthesis' in window)) return
   speechSynthesis.cancel()
+  // « 10 × 4 = ? » se lit « 10 fois 4 » ; « combien » seulement pour le facteur manquant (6 × ? = 24)
   const spoken = text
-    .replace(/([×=]) \?/g, '$1 combien')
+    .replace(/ = \?/g, '')
+    .replace(/× \?/g, '× combien')
+    .replace(/(^|\. )× (\d+)/g, '$1multiplier par $2') // début d'astuce : « × 2, c'est le double »
     .replace(/×/g, ' fois ')
     .replace(/−/g, ' moins ')
     .replace(/=/g, ' égale ')
@@ -177,20 +217,133 @@ function home() {
   const done = tablesDone(progress)
   app.innerHTML = `
     <h1>Tables de multiplication</h1>
+    ${profiles.list.length > 1 ? `<button class="toggle" data-k="profiles">👤 ${nameOf(current())} · changer</button>` : ''}
     ${week()}
     <div class="table" role="img" aria-label="${mastered} calculs maîtrisés sur 55">${cells}</div>
     <p class="legend"><span data-level="0"></span> pas encore vu <span data-level="1"></span> en cours <span data-level="5"></span> maîtrisé</p>
     <p>${mastered} / 55 calculs maîtrisés</p>
     ${done.length ? `<p class="badges">${done.map((n) => `<span>🏅 Table de ${n}</span>`).join('')}</p>` : ''}
     <button class="big" data-k="ok">Jouer</button>
-    <button class="toggle" data-k="voice" aria-pressed="${settings.voice}">🔊 Lire les questions : ${settings.voice ? 'oui' : 'non'}</button>`
+    <button class="toggle" data-k="voice" aria-pressed="${settings.voice}">🔊 Lire les questions : ${settings.voice ? 'oui' : 'non'}</button>
+    <button class="link" data-k="parent">Espace parent</button>`
   onKey = (k) => {
     if (k === 'ok') start()
+    if (k === 'profiles') pickProfile()
+    if (k === 'parent') parent()
     if (k === 'voice') {
       settings.voice = !settings.voice
-      save(SETTINGS, settings)
+      saveSettings()
       home()
     }
+  }
+}
+
+function pickProfile() {
+  app.innerHTML = `
+    <h1>Qui joue ?</h1>
+    ${profiles.list.map((p, i) => `<button class="big" data-k="profile:${i}">${nameOf(p)}</button>`).join('')}`
+  onKey = (k) => {
+    const p = k.startsWith('profile:') && profiles.list[Number(k.slice(8))]
+    if (p) {
+      useProfile(p.id)
+      home()
+    }
+  }
+}
+
+function parent() {
+  const p = current()
+  const counts = [0, 0, 0] // pas vus, en cours, maîtrisés
+  for (const [a, b] of PAIRS) {
+    const level = progress[key(a, b)]?.level ?? 0
+    counts[level === 0 ? 0 : level === MASTERED ? 2 : 1]++
+  }
+  const offset = (new Date().getDay() + 6) % 7 // depuis lundi
+  const thisWeek = Array.from({ length: offset + 1 }, (_, i) => day - offset + i)
+  const played = thisWeek.filter((d) => settings.days.includes(d)).length
+  const [right, total] = thisWeek.reduce(([r, t], d) => [r + (settings.log[d]?.[0] ?? 0), t + (settings.log[d]?.[1] ?? 0)], [0, 0])
+  const missed = mostMissed(progress)
+  const tables = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((n) => {
+    const count = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10].filter((m) => progress[key(n, m)]?.level === MASTERED).length
+    return `<li>Table de ${n} <progress max="10" value="${count}"></progress> ${count}/10</li>`
+  })
+  app.innerHTML = `
+    <div class="parent">
+      <h1>Espace parent</h1>
+      <h2>${nameOf(p)}</h2>
+      <p>${counts[2]} calculs maîtrisés, ${counts[1]} en cours, ${counts[0]} pas encore vus (sur 55).</p>
+      <p>Cette semaine : ${plural(played, 'jour')} d'entraînement${total ? `, ${plural(total, 'question')}, ${Math.round((right / total) * 100)} % justes du premier coup` : ''}.</p>
+      <p>Seuil de vitesse : ${(speedLimit(settings.times) / 1000).toLocaleString('fr-FR')} s. Un calcul répondu plus vite compte comme su par cœur.</p>
+      <h3>Les plus ratés</h3>
+      ${missed.length ? `<ul>${missed.map(([a, b]) => `<li>${a} × ${b} = ${a * b} : ${plural(progress[key(a, b)].miss!, 'erreur')}</li>`).join('')}</ul>` : "<p>Aucune erreur pour l'instant.</p>"}
+      <h3>Par table</h3>
+      <ul class="tables">${tables.join('')}</ul>
+      <h3>Enfants</h3>
+      <form data-k="rename"><label>Prénom <input name="name" maxlength="20" value="${esc(p.name)}" placeholder="${nameOf(p)}" /></label><button>Renommer</button></form>
+      <form data-k="add"><label>Nouvel enfant <input name="name" maxlength="20" required /></label><button>Ajouter</button></form>
+      ${profiles.list.length > 1 ? `<button class="danger" data-k="delete">Supprimer ${nameOf(p)} et sa progression</button>` : ''}
+      <h3>Sauvegarde</h3>
+      <p>La progression reste sur cet appareil. Pour la garder ou la passer sur un autre appareil :</p>
+      <button data-k="export">Télécharger la sauvegarde</button>
+      <label class="file">Charger une sauvegarde <input type="file" accept=".json,application/json" data-k="import" /></label>
+    </div>
+    <button class="big" data-k="ok">Retour</button>`
+  onKey = (k) => {
+    const form = app.querySelector<HTMLFormElement>(`form[data-k="${k}"]`)
+    const name = form ? String(new FormData(form).get('name')).trim() : ''
+    if (k === 'ok') home()
+    if (k === 'export') exportData()
+    if (k === 'import') importData(app.querySelector<HTMLInputElement>('input[type=file]')!.files?.[0])
+    if (k === 'rename') {
+      p.name = name
+      save(PROFILES, profiles)
+      parent()
+    }
+    if (k === 'add' && name) {
+      const id = 'p' + Date.now().toString(36)
+      profiles.list.push({ id, name })
+      useProfile(id)
+      home()
+    }
+    if (k === 'delete' && confirm(`Supprimer ${p.name || 'cet enfant'} et toute sa progression ?`)) {
+      try {
+        for (const s of storageKeys(p.id)) localStorage.removeItem(s)
+      } catch {
+        // stockage indisponible : rien à effacer
+      }
+      profiles.list = profiles.list.filter((x) => x !== p)
+      useProfile(profiles.list[0].id)
+      home()
+    }
+  }
+}
+
+function exportData() {
+  const data: Record<string, unknown> = {}
+  try {
+    for (const k of Object.keys(localStorage)) if (k.startsWith(STORE)) data[k] = JSON.parse(localStorage.getItem(k)!)
+  } catch {
+    return alert('Impossible de lire la progression sur cet appareil.')
+  }
+  const url = URL.createObjectURL(new Blob([JSON.stringify({ app: STORE, version: 1, data })], { type: 'application/json' }))
+  const link = Object.assign(document.createElement('a'), { href: url, download: `${STORE}-${new Date().toISOString().slice(0, 10)}.json` })
+  link.click()
+  setTimeout(() => URL.revokeObjectURL(url), 1000)
+}
+
+// Le fichier vient de l'extérieur : seulement nos propres clés, avec des objets comme valeurs.
+async function importData(file?: File) {
+  if (!file) return
+  try {
+    const { app: name, data } = JSON.parse(await file.text())
+    const entries = Object.entries(data ?? {}).filter(([k, v]) => k.startsWith(STORE) && v && typeof v === 'object')
+    if (name !== STORE || !entries.length) throw new Error('sauvegarde invalide')
+    if (!confirm('Remplacer toute la progression de cet appareil par celle du fichier ?')) return
+    for (const k of Object.keys(localStorage)) if (k.startsWith(STORE)) localStorage.removeItem(k)
+    for (const [k, v] of entries) localStorage.setItem(k, JSON.stringify(v))
+    location.reload()
+  } catch {
+    alert('Ce fichier ne contient pas de sauvegarde valide.')
   }
 }
 
@@ -222,7 +375,7 @@ function discover([a, b]: Pair, retry = false) {
   input(`${hint(a, b)}. ${a} × ${b} = ?`, (value) => {
     if (value !== a * b) return discover([a, b], true)
     progress[key(a, b)] = { level: 1, due: day + 1 }
-    save(STORE, progress)
+    saveProgress()
     next()
   })
 }
@@ -247,11 +400,11 @@ function ask(pair: Pair) {
       progress[k] = grade(before, right, ms, day, speedLimit(settings.times))
       if (progress[k].level > before.level) session.promoted++
       if (progress[k].level === MASTERED && before.level < MASTERED) session.mastered++
-      save(STORE, progress)
+      saveProgress()
     }
     if (right && !missing && isRule(pair)) {
       settings.times = [...settings.times, ms].slice(-10)
-      save(SETTINGS, settings)
+      saveSettings()
     }
     if (right) return cheer()
     session.queue.splice(3, 0, pair) // le fait revient 3 questions plus loin
@@ -299,10 +452,10 @@ function summary() {
   // Les étoiles récompensent l'effort et les progrès, pas seulement la réussite
   const stars = 1 + (discovered + promoted > 0 ? 1 : 0) + (!total || right / total >= 0.8 ? 1 : 0)
   const newTables = tablesDone(progress).filter((n) => !tablesBefore.includes(n))
-  if (!settings.days.includes(day)) {
-    settings.days = [...settings.days, day]
-    save(SETTINGS, settings)
-  }
+  if (!settings.days.includes(day)) settings.days = [...settings.days, day]
+  const [dayRight, dayTotal] = settings.log[day] ?? [0, 0]
+  settings.log[day] = [dayRight + right, dayTotal + total]
+  saveSettings()
   app.innerHTML = `
     <p class="stars" aria-label="${stars} étoiles sur 3">${'★'.repeat(stars)}${'☆'.repeat(3 - stars)}</p>
     ${streakLine(' !')}
