@@ -11,6 +11,7 @@ import {
   key,
   planSession,
   speedLimit,
+  streak,
   tablesDone,
   type Progress,
 } from './engine'
@@ -139,5 +140,18 @@ describe('confusion', () => {
 describe('tablesDone', () => {
   it('liste les tables entièrement maîtrisées', () => {
     expect(tablesDone(progressOf(PAIRS.slice(0, 19), MASTERED))).toEqual([1, 10])
+  })
+})
+
+describe('streak', () => {
+  const day = 100
+  it('compte les jours d’affilée jusqu’à aujourd’hui', () => {
+    expect(streak([], day)).toBe(0)
+    expect(streak([day], day)).toBe(1)
+    expect(streak([day, day - 1, day - 3], day)).toBe(2)
+  })
+  it('reste valable si l’enfant a joué hier mais pas encore aujourd’hui', () => {
+    expect(streak([day - 1, day - 2], day)).toBe(2)
+    expect(streak([day - 2], day)).toBe(0)
   })
 })

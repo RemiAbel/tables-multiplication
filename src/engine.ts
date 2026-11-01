@@ -120,3 +120,12 @@ export function confusion(a: number, b: number, answer: number): string | null {
 
 export const tablesDone = (p: Progress) =>
   ONE_TO_TEN.filter((n) => ONE_TO_TEN.every((m) => p[key(n, m)]?.level === MASTERED))
+
+// Jours joués d'affilée jusqu'à aujourd'hui, ou jusqu'à hier si l'enfant n'a pas encore joué aujourd'hui
+export function streak(days: number[], day: number): number {
+  const played = new Set(days)
+  let d = played.has(day) ? day : day - 1
+  let n = 0
+  while (played.has(d--)) n++
+  return n
+}

@@ -10,6 +10,7 @@ import {
   key,
   planSession,
   speedLimit,
+  streak,
   tablesDone,
   today,
 } from './engine'
@@ -151,7 +152,13 @@ function week() {
   const played = days.filter(([, p]) => p).length
   return `<div class="week" role="img" aria-label="Cette semaine : ${plural(played, 'jour')} d'entraînement">
     ${days.map(([letter, p]) => `<span class="${p ? 'played' : ''}">${letter}<b>${p ? '★' : '·'}</b></span>`).join('')}
-  </div>`
+  </div>${streakLine()}`
+}
+
+// Affichée à partir de 2 jours ; une série cassée disparaît sans message
+function streakLine(cheer = '') {
+  const n = streak(settings.days, day)
+  return n >= 2 ? `<p class="streak">🔥 ${n} jours d'affilée${cheer}</p>` : ''
 }
 
 function home() {
@@ -293,11 +300,12 @@ function summary() {
   const stars = 1 + (discovered + promoted > 0 ? 1 : 0) + (!total || right / total >= 0.8 ? 1 : 0)
   const newTables = tablesDone(progress).filter((n) => !tablesBefore.includes(n))
   if (!settings.days.includes(day)) {
-    settings.days = [...settings.days, day].slice(-60)
+    settings.days = [...settings.days, day]
     save(SETTINGS, settings)
   }
   app.innerHTML = `
     <p class="stars" aria-label="${stars} étoiles sur 3">${'★'.repeat(stars)}${'☆'.repeat(3 - stars)}</p>
+    ${streakLine(' !')}
     ${newTables.map((n) => `<p class="badge-new">🏅 Table de ${n} maîtrisée !</p>`).join('')}
     <p>${plural(right, 'bonne réponse', 'bonnes réponses')} du premier coup sur ${total}</p>
     ${discovered ? `<p>Tu as découvert ${plural(discovered, 'nouveau calcul', 'nouveaux calculs')}.</p>` : ''}

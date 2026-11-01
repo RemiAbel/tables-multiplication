@@ -195,7 +195,7 @@ button:focus-visible {
   font-weight: 700;
 }
 
-/* Semaine : une étoile par jour joué, sans compteur de série */
+/* Semaine : une étoile par jour joué */
 .week {
   display: flex;
   justify-content: center;
@@ -252,4 +252,10 @@ button:focus-visible {
   border: 2px dashed var(--muted);
   border-radius: 0.8rem;
   word-break: break-all;
+}
+
+.streak {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--accent);
 }
