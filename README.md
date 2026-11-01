@@ -2,6 +2,8 @@
 
 Web app pour apprendre les tables de 1 à 10 (7–10 ans). Une séance par jour d'environ 5 minutes ; l'app choisit seule quoi travailler.
 
+En ligne : https://remiabel.github.io/tables-multiplication/ (redéployée par GitHub Actions à chaque push sur `main`).
+
 ## Principes (issus de la recherche)
 
 - Les faits arrivent dans un ordre qui part des tables faciles : ×1, ×10, ×2, ×5, les carrés, ×3, ×4, ×9, ×6, ×8. Chaque nouveau fait est présenté avec une image (points) et une astuce.
