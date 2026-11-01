@@ -23,6 +23,7 @@ body {
   display: grid;
   gap: 1rem;
   text-align: center;
+  font-size: 1.3rem;
 }
 
 h1,
@@ -57,7 +58,7 @@ button:focus-visible {
   display: grid;
   grid-template-columns: repeat(11, 1fr);
   gap: 2px;
-  font-size: clamp(0.6rem, 2.6vw, 0.9rem);
+  font-size: clamp(0.75rem, 3vw, 1.1rem);
 }
 
 .table > * {
@@ -70,7 +71,14 @@ button:focus-visible {
 [data-level='0'] { background: var(--muted); }
 [data-level='1'], [data-level='2'] { background: #fed7aa; }
 [data-level='3'], [data-level='4'] { background: #fdba74; }
-[data-level='5'] { background: var(--ok); color: #fff; }
+/* Chaque case maîtrisée montre son morceau de l'image (--x, --y posés par case) */
+[data-level='5'] {
+  --x: 50%;
+  --y: 40%;
+  background: url('./picture.svg') var(--x) var(--y) / 1000% 1000%;
+  color: #fff;
+  text-shadow: 0 1px 2px #000a;
+}
 
 .legend {
   display: flex;
@@ -78,12 +86,12 @@ button:focus-visible {
   justify-content: center;
   align-items: center;
   gap: 0.4rem;
-  font-size: 0.9rem;
+  font-size: 1.2rem;
 }
 
 .legend span {
-  width: 1rem;
-  height: 1rem;
+  width: 1.4rem;
+  height: 1.4rem;
   border-radius: 4px;
 }
 
@@ -106,13 +114,13 @@ button:focus-visible {
 }
 
 .tag {
-  font-size: 1.4rem;
+  font-size: 1.8rem;
   font-weight: 700;
   color: var(--accent);
 }
 
 .hint {
-  font-size: 1.2rem;
+  font-size: 1.6rem;
   padding: 0.8rem;
   border-radius: 1rem;
   background: var(--card);
@@ -122,7 +130,7 @@ button:focus-visible {
   display: grid;
   grid-template-columns: repeat(var(--cols), 1fr);
   gap: 4px;
-  width: min(100%, calc(var(--cols) * 1.8rem));
+  width: min(100%, calc(var(--cols) * 1.4rem));
   margin: 0 auto;
 }
 
@@ -159,4 +167,89 @@ button:focus-visible {
 .stars {
   font-size: 3.5rem;
   color: #f59e0b;
+}
+
+.toggle {
+  justify-self: center;
+  padding: 0.5rem 1rem;
+  border: 2px solid var(--muted);
+  border-radius: 2rem;
+  background: var(--card);
+  color: var(--ink);
+}
+
+.toggle[aria-pressed='true'] {
+  border-color: var(--ok);
+}
+
+.say {
+  margin-left: 0.5rem;
+  font-size: 1.5rem;
+  vertical-align: middle;
+  border: 0;
+  background: none;
+}
+
+.note {
+  font-size: 1.6rem;
+  font-weight: 700;
+}
+
+/* Semaine : une étoile par jour joué, sans compteur de série */
+.week {
+  display: flex;
+  justify-content: center;
+  gap: 0.4rem;
+}
+
+.week span {
+  display: grid;
+  width: 2.2rem;
+  padding: 0.2rem 0;
+  border-radius: 0.6rem;
+  background: var(--card);
+  font-size: 1rem;
+}
+
+.week b {
+  font-size: 1.1rem;
+  color: var(--muted);
+}
+
+.week .played b {
+  color: #f59e0b;
+}
+
+.badges {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.4rem;
+}
+
+.badges span {
+  padding: 0.2rem 0.6rem;
+  border-radius: 1rem;
+  background: var(--card);
+}
+
+.badge-new {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.groups {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.5rem;
+  font-size: 1.8rem;
+}
+
+.groups span {
+  padding: 0.2rem 0.4rem;
+  border: 2px dashed var(--muted);
+  border-radius: 0.8rem;
+  word-break: break-all;
 }
