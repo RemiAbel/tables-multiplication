@@ -1,0 +1,162 @@
+:root {
+  --bg: #fdf8ef;
+  --ink: #2b2d42;
+  --accent: #c2410c;
+  --dot: #f97316;
+  --ok: #0f766e;
+  --muted: #e7e5e4;
+  --card: #fff;
+  font-family: ui-rounded, 'Nunito', system-ui, sans-serif;
+  color: var(--ink);
+  background: var(--bg);
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+}
+
+#app {
+  max-width: 32rem;
+  margin: 0 auto;
+  padding: 1rem;
+  display: grid;
+  gap: 1rem;
+  text-align: center;
+}
+
+h1,
+p {
+  margin: 0;
+}
+
+button {
+  font: inherit;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+button:focus-visible {
+  outline: 3px solid var(--ink);
+  outline-offset: 2px;
+}
+
+.big {
+  justify-self: center;
+  font-size: 1.6rem;
+  font-weight: 700;
+  padding: 0.8rem 2.5rem;
+  border: 0;
+  border-radius: 1rem;
+  background: var(--accent);
+  color: #fff;
+}
+
+/* Grille de progression */
+.table {
+  display: grid;
+  grid-template-columns: repeat(11, 1fr);
+  gap: 2px;
+  font-size: clamp(0.6rem, 2.6vw, 0.9rem);
+}
+
+.table > * {
+  aspect-ratio: 1;
+  display: grid;
+  place-items: center;
+  border-radius: 4px;
+}
+
+[data-level='0'] { background: var(--muted); }
+[data-level='1'], [data-level='2'] { background: #fed7aa; }
+[data-level='3'], [data-level='4'] { background: #fdba74; }
+[data-level='5'] { background: var(--ok); color: #fff; }
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.9rem;
+}
+
+.legend span {
+  width: 1rem;
+  height: 1rem;
+  border-radius: 4px;
+}
+
+/* Questions */
+.question {
+  font-size: clamp(2.2rem, 11vw, 3.2rem);
+  font-weight: 700;
+}
+
+#answer.ok,
+.question strong {
+  color: var(--ok);
+}
+
+#feedback {
+  min-height: 1.5em;
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: var(--ok);
+}
+
+.tag {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.hint {
+  font-size: 1.2rem;
+  padding: 0.8rem;
+  border-radius: 1rem;
+  background: var(--card);
+}
+
+.dots {
+  display: grid;
+  grid-template-columns: repeat(var(--cols), 1fr);
+  gap: 4px;
+  width: min(100%, calc(var(--cols) * 1.8rem));
+  margin: 0 auto;
+}
+
+.dots i {
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: var(--dot);
+}
+
+.pad {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.6rem;
+  width: 100%;
+  max-width: 20rem;
+  margin: 0 auto;
+}
+
+.pad button {
+  font-size: 1.8rem;
+  padding: 0.8rem 0;
+  border: 2px solid var(--muted);
+  border-radius: 1rem;
+  background: var(--card);
+  color: var(--ink);
+}
+
+.pad .ok {
+  background: var(--ok);
+  border-color: var(--ok);
+  color: #fff;
+}
+
+.stars {
+  font-size: 3.5rem;
+  color: #f59e0b;
+}
